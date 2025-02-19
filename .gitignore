@@ -166,3 +166,5 @@ activate
 workspace
 data/
 *.npy/
+weights/
+sample/
