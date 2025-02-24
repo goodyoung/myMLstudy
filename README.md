@@ -8,7 +8,8 @@ myMLstudy(MML)은 머신러닝과 딥러닝에 대한 학습 자료와 예제를
 - **HandsOnML**: 'Hands-On Machine Learning' 책의 실습 코드  
 - **PyTorch**: PyTorch Method 관련
 - **Statistic**: 통계학 및 Data Analysis 관련
-- **DL Implement**: 딥러닝 알고리즘의 구현 코드  
+- **DL Implement**: 딥러닝 알고리즘의 구현 코드 (Diffusion, GAN, LSTM, ...)
+- **Diffuser**: Diffuser Library 관련
 
 ## 🔥 최근 학습 내용
 
