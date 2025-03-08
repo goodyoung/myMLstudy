@@ -17,7 +17,7 @@ def train_model(model, train_loader, val_loader, optimizer, criterion, scheduler
         total_train_time += epoch_time  # 전체 학습 시간 누적
 
         print(f"Epoch [{epoch+1}/{args.epochs}] | Train Loss: {train_loss:.4f} | "
-              f"Val Loss: {val_loss:.4f} | Val Acc: {val_acc*100:.2f}% | Time: {epoch_time:.2f} sec")
+              f"Val Loss: {val_loss:.4f} | Val Acc: {val_acc*100:.2f}% | Epoch Train Time: {epoch_time} sec| Total Time: {format_time(total_train_time)}")
 
         # 모델 저장 및 Early Stopping 체크
         if val_loss < best_loss:
@@ -31,8 +31,15 @@ def train_model(model, train_loader, val_loader, optimizer, criterion, scheduler
             
         if patience >= args.early_stop:
             print("Early stopping triggered!")
-            print(f"Total Training Time: {total_train_time:.2f} sec")
+            print(f"Total Training Time: {format_time(total_train_time)} sec")
             return best_model
 
-    print(f"Training complete. Total Training Time: {total_train_time:.2f} sec")
+    print(f"Training complete. Total Training Time: {format_time(total_train_time)} sec")
     return best_model
+
+
+# 시간 변환 함수
+def format_time(seconds):
+    h, remainder = divmod(seconds, 3600)  # 1시간 = 3600초
+    m, s = divmod(remainder, 60)  # 1분 = 60초
+    return f"{int(h)}h {int(m)}m {int(s)}s"

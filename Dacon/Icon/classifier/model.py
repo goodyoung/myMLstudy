@@ -12,9 +12,8 @@ def get_model(num_channels, num_labels, device):
     #     ignore_mismatched_sizes=True,
     #     config=config,
     # )
-    model = timm.create_model("eva_large_patch14_196.in22k_ft_in22k_in1k", pretrained=True)
-    model.patch_embed.proj = nn.Conv2d(num_channels, 1024, kernel_size=(14, 14), stride=(14, 14))
-    model.head = nn.Linear(model.head.in_features, num_labels)
-    
+    model = timm.create_model("beitv2_base_patch16_224.in1k_ft_in22k_in1k",
+                              num_classes=num_labels, in_chans=num_channels,
+                                pretrained=False)
     model.to(device)
     return model

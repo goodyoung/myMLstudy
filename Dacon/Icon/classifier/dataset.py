@@ -29,7 +29,7 @@ def get_data():
     test = pd.read_csv("../open/test.csv")
     return train, test
     
-def get_dataloaders(batch_size=32, augment_num = 3,image_size = 32, SEED=0):
+def get_dataloaders(batch_size=32, augment_num = 3,image_size = 196, SEED=0):
     train, test = get_data() # 데이터 가져오기
     
     # data 전처리
