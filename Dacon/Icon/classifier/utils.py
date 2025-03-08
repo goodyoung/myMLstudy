@@ -1,5 +1,6 @@
 import torch
-import time
+import pandas as pd
+from tqdm.auto import tqdm
 
 def train_one_epoch(model, loader, optimizer, criterion, device):
     model.train()
@@ -44,13 +45,13 @@ def inference(model, loader, device):
 
     for images in tqdm(loader, desc="Inference", leave=False):
         images = images.to(device)
-        outputs = best_model(images)
+        outputs = model(images)
         _, predicted = torch.max(outputs.logits, 1)
         preds.extend(predicted.cpu().numpy())
     return preds
     
 def submit(preds, encoder, file_name):
-    submission = pd.read_csv("open/sample_submission.csv")
+    submission = pd.read_csv("../open/sample_submission.csv")
     pred_labels = encoder.inverse_transform(preds)
     
     submission['label'] = pred_labels

@@ -2,7 +2,6 @@ import pandas as pd
 from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import train_test_split
 
-import torch
 from torch.utils.data import Dataset, DataLoader
 import torchvision.transforms as transforms
 
@@ -26,13 +25,12 @@ class CustomDataset(Dataset):
         return image if self.test else (image, row["label"])
 
 def get_data():
-    train = pd.read_csv("open/train.csv")
-    test = pd.read_csv("open/test.csv")
-    submission = pd.read_csv("open/sample_submission.csv")
-    return train, test, submission
+    train = pd.read_csv("../open/train.csv")
+    test = pd.read_csv("../open/test.csv")
+    return train, test
     
-def get_dataloaders(batch_size=32, augment_num = 3,SEED=0):
-    train, test, submission = get_data() # 데이터 가져오기
+def get_dataloaders(batch_size=32, augment_num = 3,image_size = 32, SEED=0):
+    train, test = get_data() # 데이터 가져오기
     
     # data 전처리
     label_encoder = LabelEncoder()
@@ -41,7 +39,7 @@ def get_dataloaders(batch_size=32, augment_num = 3,SEED=0):
     
     transform = transforms.Compose([
         transforms.ToPILImage(),
-        transforms.Resize((config.image_size, config.image_size)),
+        transforms.Resize((image_size, image_size)),
         transforms.RandomHorizontalFlip(p=0.7),  # 50% 확률로 좌우 반전
         transforms.RandomVerticalFlip(p=0.3),  # 20% 확률로 상하 반전 (너무 강한 반전 방지)
         transforms.RandomRotation(degrees=(-25, 25)),  # 제한된 각도 회전
@@ -58,8 +56,8 @@ def get_dataloaders(batch_size=32, augment_num = 3,SEED=0):
     for _ in range(augment_num): train_dataset += CustomDataset(df = train.iloc[train_idx, :], transform=transform)
 
     # data loader
-    train_loader = DataLoader(train_dataset, batch_size=config.batch_size, shuffle=True)
-    val_loader = DataLoader(val_dataset, batch_size=config.batch_size, shuffle=False)
-    test_loader = DataLoader(test_dataset, batch_size=config.batch_size, shuffle=False)
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+    val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
+    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
 
     return train_loader, val_loader, test_loader, label_encoder

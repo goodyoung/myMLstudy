@@ -1,5 +1,6 @@
 import argparse
-import torch
+import torch.nn as nn
+import torch.optim as optim
 from dataset import get_dataloaders
 from model import get_model
 from train import train_model
@@ -22,26 +23,26 @@ def main():
     # 1. 데이터 로드
     train_loader, val_loader, test_loader, label_encoder = get_dataloaders(batch_size=args.batch_size, 
                                                                            augment_num = 3, 
+                                                                           image_size = config.image_size,
                                                                            SEED = config.seed)
 
     # 2. 모델 로드
     model = get_model(num_channels = config.in_channel, 
-                      num_labels = num_labels, device = args.device)
+                      num_labels = config.num_labels, device = args.device)
     
     # 3. 손실 함수 및 최적화 기법 설정
-    criterion = torch.nn.CrossEntropyLoss()
-    optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr)
-    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, T_max=args.epochs)
+    criterion = nn.CrossEntropyLoss()
+    optimizer = optim.AdamW(model.parameters(), lr=args.lr)
+    scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.epochs)
 
     # 4. 학습 실행
-    train_model(model, train_loader, val_loader, optimizer, criterion, scheduler, args)
+    best_model = train_model(model, train_loader, val_loader, optimizer, criterion, scheduler, args)
 
     # 5. Inference
-    preds = inference(best_model, test_loader, device)
+    preds = inference(best_model, test_loader, args.device)
     
     # 6. Submit
-    submit(preds, label_encoder, args.submission_path):
+    submit(preds, label_encoder, args.submission_path)
 
 if __name__ == "__main__":
     main()
-
