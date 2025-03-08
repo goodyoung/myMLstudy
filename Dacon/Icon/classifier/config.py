@@ -6,6 +6,7 @@ class Config:
     batch_size = 32
     num_epochs = 240
     learning_rate = 5e-5
+    num_workers = 4
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     seed = 42
     weights_name = f"vit-baseline-model-change-{num_epochs}.pth"

@@ -14,9 +14,11 @@ def main():
     parser.add_argument("--batch_size", type=int, default=config.batch_size, help="Batch size")
     parser.add_argument("--lr", type=float, default=config.learning_rate, help="Learning rate")
     parser.add_argument("--device", type=str, default=config.device, help="Device (cuda or cpu)")
+    parser.add_argument("--num_workers", type=int, default=config.num_workers, help="Number of Worker")
     parser.add_argument("--early_stop", type=int, default=config.early_stop_epoch, help="Early stopping patience")
     parser.add_argument("--save_model_path", type=str, default=f"weights/{config.weights_name}", help="Path to save trained model")
     parser.add_argument("--submission_path", type=str, default="submission.csv", help="Path to save submission file")
+    
     
     args = parser.parse_args()
 
@@ -24,6 +26,7 @@ def main():
     train_loader, val_loader, test_loader, label_encoder = get_dataloaders(batch_size=args.batch_size, 
                                                                            augment_num = 3, 
                                                                            image_size = config.image_size,
+                                                                           num_workers = args.num_workers,
                                                                            SEED = config.seed)
 
     # 2. 모델 로드

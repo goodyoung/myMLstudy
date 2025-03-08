@@ -29,7 +29,7 @@ def get_data():
     test = pd.read_csv("../open/test.csv")
     return train, test
     
-def get_dataloaders(batch_size=32, augment_num = 3,image_size = 196, SEED=0):
+def get_dataloaders(batch_size=32, augment_num = 3, image_size = 196, num_workers=4, SEED=0):
     train, test = get_data() # 데이터 가져오기
     
     # data 전처리
@@ -56,8 +56,8 @@ def get_dataloaders(batch_size=32, augment_num = 3,image_size = 196, SEED=0):
     for _ in range(augment_num): train_dataset += CustomDataset(df = train.iloc[train_idx, :], transform=transform)
 
     # data loader
-    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-    val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
-    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, num_workers=num_workers, pin_memory = True, shuffle=True)
+    val_loader = DataLoader(val_dataset, batch_size=batch_size, num_workers=num_workers, pin_memory = True, shuffle=False)
+    test_loader = DataLoader(test_dataset, batch_size=batch_size, num_workers=num_workers, pin_memory = True, shuffle=False)
 
     return train_loader, val_loader, test_loader, label_encoder
