@@ -29,10 +29,10 @@ def train_model(model, train_loader, val_loader, optimizer, criterion, scheduler
         else:
             patience += 1
             
-        if patience >= args.early_stop:
-            print("Early stopping triggered!")
-            print(f"Total Training Time: {format_time(total_train_time)} sec")
-            return best_model
+        # if patience >= args.early_stop:
+        #     print("Early stopping triggered!")
+        #     print(f"Total Training Time: {format_time(total_train_time)} sec")
+        #     return best_model
 
     print(f"Training complete. Total Training Time: {format_time(total_train_time)} sec")
     return best_model

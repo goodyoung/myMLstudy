@@ -46,7 +46,7 @@ def inference(model, loader, device):
     preds = []
 
     # for images in tqdm(loader, desc="Inference", leave=False):
-    for images, labels in loader:
+    for images in loader:
         images = images.to(device)
         outputs = model(images)
         _, predicted = torch.max(outputs, 1)
@@ -59,6 +59,6 @@ def submit(preds, encoder, file_name):
     
     submission['label'] = pred_labels
     submission.to_csv(file_name, index=False)
-    
+
 def save_checkpoint(model, path):
     torch.save(model.state_dict(), path)

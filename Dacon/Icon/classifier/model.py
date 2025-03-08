@@ -1,4 +1,5 @@
 import timm
+import torch
 import torch.nn as nn
 # from transformers import ViTForImageClassification, ViTConfig
 
@@ -14,6 +15,10 @@ def get_model(num_channels, num_labels, device):
     # )
     model = timm.create_model("beitv2_base_patch16_224.in1k_ft_in22k_in1k",
                               num_classes=num_labels, in_chans=num_channels,
-                                pretrained=False)
+                                pretrained=True)
     model.to(device)
+    return model
+    
+def load_model(model, weights_path, device):
+    model.load_state_dict(torch.load(weights_path, map_location=device, weights_only = True))
     return model
