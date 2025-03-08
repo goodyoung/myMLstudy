@@ -1,5 +1,8 @@
-import torch
 import pandas as pd
+from sklearn.preprocessing import LabelEncoder
+from sklearn.model_selection import train_test_split
+
+import torch
 from torch.utils.data import Dataset, DataLoader
 import torchvision.transforms as transforms
 
@@ -8,7 +11,7 @@ class CustomDataset(Dataset):
         self.df = df
         self.transform = transform
         self.test = test
-        self.image_columns = df.columns[1:] if test else df.columns[2:]
+        self.image_columns = df.columns if test else df.columns[2:]
 
     def __len__(self):
         return len(self.df)
@@ -22,17 +25,20 @@ class CustomDataset(Dataset):
 
         return image if self.test else (image, row["label"])
 
-def get_dataset():
+def get_data():
     train = pd.read_csv("open/train.csv")
     test = pd.read_csv("open/test.csv")
     submission = pd.read_csv("open/sample_submission.csv")
     return train, test, submission
-
-def get_dataloaders(batch_size=32):
-    train, test, submission = get_dataset() # 데이터 가져오기
     
-
-
+def get_dataloaders(batch_size=32, augment_num = 3,SEED=0):
+    train, test, submission = get_data() # 데이터 가져오기
+    
+    # data 전처리
+    label_encoder = LabelEncoder()
+    train["label"] = label_encoder.fit_transform(train["label"])  # 문자열 라벨을 숫자로 변환
+    train_idx, val_idx = train_test_split(train.index, test_size=0.2, stratify=train["label"], random_state=SEED)    
+    
     transform = transforms.Compose([
         transforms.ToPILImage(),
         transforms.Resize((config.image_size, config.image_size)),
@@ -43,10 +49,17 @@ def get_dataloaders(batch_size=32):
         transforms.Normalize(mean=[0.5], std=[0.5])
     ])
 
-    train_dataset = CustomDataset(train_df, transform=transform)
-    val_dataset = CustomDataset(val_df, transform=transform)
+    # dataset
+    train_dataset = CustomDataset(df = train.iloc[train_idx, :], transform=transform)
+    val_dataset = CustomDataset(df = train.iloc[val_idx, :], transform=transform)
+    test_dataset = CustomDataset(df = test.iloc[:, 1:], transform=transform, test = True)
 
-    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-    val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
+    # aug dataset    
+    for _ in range(augment_num): train_dataset += CustomDataset(df = train.iloc[train_idx, :], transform=transform)
 
-    return train_loader, val_loader
+    # data loader
+    train_loader = DataLoader(train_dataset, batch_size=config.batch_size, shuffle=True)
+    val_loader = DataLoader(val_dataset, batch_size=config.batch_size, shuffle=False)
+    test_loader = DataLoader(test_dataset, batch_size=config.batch_size, shuffle=False)
+
+    return train_loader, val_loader, test_loader, label_encoder
