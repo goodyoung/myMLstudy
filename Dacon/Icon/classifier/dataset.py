@@ -58,7 +58,7 @@ def get_dataloaders(dataset, train_val_idx, batch_size=32, augment_num = 3,
         transforms.RandomAffine(degrees=30, translate=(0.1, 0.1), scale=(0.8, 1.2), shear=10),
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.5], std=[0.5]),
-        transforms.RandomErasing(p=0.5, scale=(0.02, 0.2), ratio=(0.3, 3.3)),
+        # transforms.RandomErasing(p=0.5, scale=(0.02, 0.2), ratio=(0.3, 3.3)),
     ])
     
     test_transform = transforms.Compose([

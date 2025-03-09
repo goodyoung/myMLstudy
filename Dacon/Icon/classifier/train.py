@@ -16,13 +16,8 @@ def train_model(model, train_loader, val_loader, optimizer, criterion, scheduler
         epoch_time = time.time() - start_time  # 한 Epoch 소요 시간
         total_train_time += epoch_time  # 전체 학습 시간 누적
 
-        if fold_num:
-            print(f"[Fold-{fold_num}]: Epoch [{epoch+1}/{args.epochs}] | Train Loss: {train_loss:.4f} | "
-                          f"Val Loss: {val_loss:.4f} | Val Acc: {val_acc*100:.2f}% | Epoch Train Time: {epoch_time:.2f} sec| Total Time: {format_time(total_train_time)}")
-            
-        else:
-            print(f"Epoch [{epoch+1}/{args.epochs}] | Train Loss: {train_loss:.4f} | "
-              f"Val Loss: {val_loss:.4f} | Val Acc: {val_acc*100:.2f}% | Epoch Train Time: {epoch_time:.2f} sec| Total Time: {format_time(total_train_time)}")
+        LOG = f"Epoch [{epoch+1}/{args.epochs}] | Train Loss: {train_loss:.4f} | " f"Val Loss: {val_loss:.4f} | Val Acc: {val_acc*100:.2f}% | Epoch Train Time: {epoch_time:.2f} sec| Total Time: {format_time(total_train_time)}"
+        print(f"[Fold-{fold_num}]: "+ LOG) if fold_num else print(LOG)
 
         # 모델 저장 및 Early Stopping 체크
         if val_loss < best_loss:

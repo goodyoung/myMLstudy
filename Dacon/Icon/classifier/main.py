@@ -56,29 +56,6 @@ def main():
     
     args = parser.parse_args()
 
-    # # 데이터 로드
-    # train_loader, val_loader, test_loader, label_encoder = get_dataloaders(batch_size=args.batch_size, 
-    #                                                                        augment_num = 3, 
-    #                                                                        image_size = config.image_size,
-    #                                                                        num_workers = args.num_workers,
-    #                                                                        SEED = config.seed)
-
-    # # 모델 로드
-    # model = get_model(num_channels = config.in_channel, 
-    #                   num_labels = config.num_labels, device = args.device)
-    # if args.mode == "train" or args.mode == "total":
-    #     # 손실 함수 및 최적화 기법 설정
-    #     criterion = nn.CrossEntropyLoss()
-    #     optimizer = optim.AdamW(model.parameters(), lr=args.lr)
-    #     scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.epochs)
-    
-    #     # 학습 실행
-    #     best_model = train_model(model, train_loader, val_loader, optimizer, criterion, scheduler, args)
-        
-    # elif args.mode == "inference":
-        
-    #     best_model = load_model(model, args.save_model_path, args.device)
-
     train, test = get_data() # 데이터 가져오기
     train, label_encoder = preprocessing(train) # train data 전처리
     best_models = []
@@ -105,8 +82,6 @@ def main():
         else:
             preds = inference(best_model, test_loader, args.device) # Inference
             submit(preds, label_encoder, args.submission_path + ".csv") # Submit
-        
-        
 
 if __name__ == "__main__":
     main()
