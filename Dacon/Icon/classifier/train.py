@@ -1,10 +1,10 @@
 import time
 from utils import train_one_epoch, val_one_epoch, save_checkpoint
 
-def train_model(model, train_loader, val_loader, optimizer, criterion, scheduler, args):
+def train_model(model, train_loader, val_loader, optimizer, criterion, scheduler, args, fold_num):
     best_loss = 1e9
     best_model = None
-    early_stop_num = 0  # 개선되지 않은 epoch 수 카운트
+    patience = 0 
     total_train_time = 0  # 전체 학습 시간
 
     for epoch in range(args.epochs):
@@ -16,7 +16,12 @@ def train_model(model, train_loader, val_loader, optimizer, criterion, scheduler
         epoch_time = time.time() - start_time  # 한 Epoch 소요 시간
         total_train_time += epoch_time  # 전체 학습 시간 누적
 
-        print(f"Epoch [{epoch+1}/{args.epochs}] | Train Loss: {train_loss:.4f} | "
+        if fold_num:
+            print(f"[Fold-{fold_num}]: Epoch [{epoch+1}/{args.epochs}] | Train Loss: {train_loss:.4f} | "
+                          f"Val Loss: {val_loss:.4f} | Val Acc: {val_acc*100:.2f}% | Epoch Train Time: {epoch_time:.2f} sec| Total Time: {format_time(total_train_time)}")
+            
+        else:
+            print(f"Epoch [{epoch+1}/{args.epochs}] | Train Loss: {train_loss:.4f} | "
               f"Val Loss: {val_loss:.4f} | Val Acc: {val_acc*100:.2f}% | Epoch Train Time: {epoch_time:.2f} sec| Total Time: {format_time(total_train_time)}")
 
         # 모델 저장 및 Early Stopping 체크
@@ -28,11 +33,11 @@ def train_model(model, train_loader, val_loader, optimizer, criterion, scheduler
             patience = 0
         else:
             patience += 1
-            
-        # if patience >= args.early_stop:
-        #     print("Early stopping triggered!")
-        #     print(f"Total Training Time: {format_time(total_train_time)} sec")
-        #     return best_model
+        
+        if args.early_stop and patience >= args.early_stop:
+            print("Early stopping triggered!")
+            print(f"Total Training Time: {format_time(total_train_time)} sec")
+            return best_model
 
     print(f"Training complete. Total Training Time: {format_time(total_train_time)} sec")
     return best_model

@@ -56,7 +56,6 @@ def inference(model, loader, device):
 def submit(preds, encoder, file_name):
     submission = pd.read_csv("../open/sample_submission.csv")
     pred_labels = encoder.inverse_transform(preds)
-    
     submission['label'] = pred_labels
     submission.to_csv(file_name, index=False)
 

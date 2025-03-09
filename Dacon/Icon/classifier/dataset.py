@@ -29,13 +29,25 @@ def get_data():
     test = pd.read_csv("../open/test.csv")
     return train, test
     
-def get_dataloaders(batch_size=32, augment_num = 3, image_size = 196, num_workers=4, SEED=0):
-    train, test = get_data() # 데이터 가져오기
-    
-    # data 전처리
+def preprocessing(data):
+    # train data 전처리
     label_encoder = LabelEncoder()
-    train["label"] = label_encoder.fit_transform(train["label"])  # 문자열 라벨을 숫자로 변환
-    train_idx, val_idx = train_test_split(train.index, test_size=0.2, stratify=train["label"], random_state=SEED)    
+    data["label"] = label_encoder.fit_transform(data["label"])  # 문자열 라벨을 숫자로 변환
+    return data, label_encoder
+
+def get_dataloaders(dataset, train_val_idx, batch_size=32, augment_num = 3,
+                    image_size = 196, num_workers=4, SEED=0):
+    train, test = dataset # train, test 분리
+    # train, test = get_data() # 데이터 가져오기
+    
+    # # data 전처리
+    # label_encoder = LabelEncoder()
+    # train["label"] = label_encoder.fit_transform(train["label"])  # 문자열 라벨을 숫자로 변환
+    
+    if train_val_idx: # kfold 이면
+        train_idx, val_idx = train_val_idx
+    else:
+        train_idx, val_idx = train_test_split(train.index, test_size=0.2, stratify=train["label"], random_state=SEED)    
     
     transform = transforms.Compose([
         transforms.ToPILImage(),
@@ -43,21 +55,30 @@ def get_dataloaders(batch_size=32, augment_num = 3, image_size = 196, num_worker
         transforms.RandomHorizontalFlip(p=0.7),  # 50% 확률로 좌우 반전
         transforms.RandomVerticalFlip(p=0.3),  # 20% 확률로 상하 반전 (너무 강한 반전 방지)
         transforms.RandomRotation(degrees=(-25, 25)),  # 제한된 각도 회전
+        transforms.RandomAffine(degrees=30, translate=(0.1, 0.1), scale=(0.8, 1.2), shear=10),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.5], std=[0.5]),
+        transforms.RandomErasing(p=0.5, scale=(0.02, 0.2), ratio=(0.3, 3.3)),
+    ])
+    
+    test_transform = transforms.Compose([
+        transforms.ToPILImage(),
+        transforms.Resize((image_size, image_size)),
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.5], std=[0.5])
     ])
-
+    
     # dataset
     train_dataset = CustomDataset(df = train.iloc[train_idx, :], transform=transform)
-    val_dataset = CustomDataset(df = train.iloc[val_idx, :], transform=transform)
-    test_dataset = CustomDataset(df = test.iloc[:, 1:], transform=transform, test = True)
+    val_dataset = CustomDataset(df = train.iloc[val_idx, :], transform=test_transform)
+    test_dataset = CustomDataset(df = test.iloc[:, 1:], transform=test_transform, test = True)
 
     # aug dataset    
-    for _ in range(augment_num): train_dataset += CustomDataset(df = train.iloc[train_idx, :], transform=transform)
+    # for _ in range(augment_num): train_dataset += CustomDataset(df = train.iloc[train_idx, :], transform=transform)
 
     # data loader
     train_loader = DataLoader(train_dataset, batch_size=batch_size, num_workers=num_workers, pin_memory = True, shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=batch_size, num_workers=num_workers, pin_memory = True, shuffle=False)
     test_loader = DataLoader(test_dataset, batch_size=batch_size, num_workers=num_workers, pin_memory = True, shuffle=False)
 
-    return train_loader, val_loader, test_loader, label_encoder
+    return train_loader, val_loader, test_loader

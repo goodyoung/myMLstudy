@@ -1,12 +1,41 @@
 import argparse
+import numpy as np
+from sklearn.model_selection import StratifiedKFold
 import torch.nn as nn
 import torch.optim as optim
-from dataset import get_dataloaders
+from dataset import get_dataloaders, get_data, preprocessing
 from model import get_model, load_model
 from train import train_model
 from utils import inference, submit
 from config import Config
 
+def run_model_pipeline(dataset, args, config, train_val_idx = None, fold_num = None):
+    # 데이터 로드
+    train_loader, val_loader, test_loader = get_dataloaders(dataset = dataset,
+                                                            train_val_idx = train_val_idx,
+                                                                           batch_size=args.batch_size, 
+                                                                           augment_num = 3, 
+                                                                           image_size = config.image_size,
+                                                                           num_workers = args.num_workers,
+                                                                           SEED = config.seed)
+    # 모델 로드
+    model = get_model(num_channels = config.in_channel, 
+                      num_labels = config.num_labels, device = args.device)
+    if args.mode == "train" or args.mode == "total":
+        # 손실 함수 및 최적화 기법 설정
+        criterion = nn.CrossEntropyLoss()
+        optimizer = optim.AdamW(model.parameters(), lr=args.lr)
+        scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.epochs)
+    
+        # 모델 학습
+        best_model = train_model(model, train_loader, val_loader, optimizer, criterion, scheduler, args, fold_num)
+        
+    elif args.mode == "inference":
+        best_model = load_model(model, args.save_model_path, args.device)
+    return best_model, test_loader
+        
+        
+    
 def main():
     config = Config()
     parser = argparse.ArgumentParser(description="Train Model")
@@ -21,39 +50,63 @@ def main():
     parser.add_argument("--early_stop", type=int, default=config.early_stop_epoch, help="Early stopping patience")
     parser.add_argument("--save_model_path", type=str, default=f"weights/{config.weights_name}", help="Path to save trained model")
     parser.add_argument("--submission_path", type=str, default="submission.csv", help="Path to save submission file")
+    parser.add_argument("--n_splits", type=int, default=5, help="Number of folds for StratifiedKFold")
+    parser.add_argument("--use_kfold", action='store_true', help="Use StratifiedKFold for training")
     
     
     args = parser.parse_args()
 
-    # 데이터 로드
-    train_loader, val_loader, test_loader, label_encoder = get_dataloaders(batch_size=args.batch_size, 
-                                                                           augment_num = 3, 
-                                                                           image_size = config.image_size,
-                                                                           num_workers = args.num_workers,
-                                                                           SEED = config.seed)
+    # # 데이터 로드
+    # train_loader, val_loader, test_loader, label_encoder = get_dataloaders(batch_size=args.batch_size, 
+    #                                                                        augment_num = 3, 
+    #                                                                        image_size = config.image_size,
+    #                                                                        num_workers = args.num_workers,
+    #                                                                        SEED = config.seed)
 
-    # 모델 로드
-    model = get_model(num_channels = config.in_channel, 
-                      num_labels = config.num_labels, device = args.device)
-    if args.mode == "train" or args.mode == "total":
-        # 손실 함수 및 최적화 기법 설정
-        criterion = nn.CrossEntropyLoss()
-        optimizer = optim.AdamW(model.parameters(), lr=args.lr)
-        scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.epochs)
+    # # 모델 로드
+    # model = get_model(num_channels = config.in_channel, 
+    #                   num_labels = config.num_labels, device = args.device)
+    # if args.mode == "train" or args.mode == "total":
+    #     # 손실 함수 및 최적화 기법 설정
+    #     criterion = nn.CrossEntropyLoss()
+    #     optimizer = optim.AdamW(model.parameters(), lr=args.lr)
+    #     scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.epochs)
     
-        # 학습 실행
-        best_model = train_model(model, train_loader, val_loader, optimizer, criterion, scheduler, args)
+    #     # 학습 실행
+    #     best_model = train_model(model, train_loader, val_loader, optimizer, criterion, scheduler, args)
         
-    elif args.mode == "inference":
+    # elif args.mode == "inference":
         
-        best_model = load_model(model, args.save_model_path, args.device)
+    #     best_model = load_model(model, args.save_model_path, args.device)
+
+    train, test = get_data() # 데이터 가져오기
+    train, label_encoder = preprocessing(train) # train data 전처리
+    best_models = []
+    if args.use_kfold:
+        skf = StratifiedKFold(n_splits=args.n_splits, shuffle=True, random_state=config.seed)
+        for fold, (train_idx, val_idx) in enumerate(skf.split(np.zeros(len(train['label'])), train['label'])):
+            print(f"Fold {fold+1}/{args.n_splits}")
+            args.save_model_path = f"weights/baseline-timm-aug-pretrained_fold{fold}.pth"
+            # 훈련 파이프라인
+            best_model, test_loader = run_model_pipeline(dataset = (train, test),
+                                                         train_val_idx = (train_idx, val_idx), 
+                                                         args = args, config = config, fold_num = fold+1)
+            best_models.append(best_model)
+    else:    
+        # 훈련 파이프라인
+        best_model, test_loader = run_model_pipeline(dataset = (train, test), 
+                                                     args = args, config = config)
         
     if args.mode == "total" or args.mode == "inference":
-        # Inference
-        preds = inference(best_model, test_loader, args.device)
+        if args.use_kfold:
+            for idx, model in enumerate(best_models):
+                preds = inference(model, test_loader, args.device) # Inference
+                submit(preds, label_encoder, args.submission_path + f"_fold{str(idx+1)}" + ".csv") # Submit
+        else:
+            preds = inference(best_model, test_loader, args.device) # Inference
+            submit(preds, label_encoder, args.submission_path + ".csv") # Submit
         
-        # Submit
-        submit(preds, label_encoder, args.submission_path)
+        
 
 if __name__ == "__main__":
     main()
