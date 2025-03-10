@@ -15,7 +15,7 @@ def get_model(num_channels, num_labels, device):
     # )
     model = timm.create_model("beitv2_base_patch16_224.in1k_ft_in22k_in1k",
                               num_classes=num_labels, in_chans=num_channels,
-                                pretrained=True)
+                                pretrained=False)
     model.to(device)
     return model
     
