@@ -23,6 +23,11 @@ def train_model(model, train_loader, val_loader, optimizer, criterion, scheduler
         if val_loss < best_loss:
             print(f'Best Model Saved!!')
             save_checkpoint(model, args.save_model_path)
+
+            # Best Model 저장 시점에 로그를 txt 파일에도 기록
+            with open("best_model_log.txt", 'a', encoding='utf-8') as f:
+                f.write(f"[Fold{fold_num}-Best Model] :"+ LOG + "\n")
+                
             best_loss = val_loss
             best_model = model
             patience = 0
