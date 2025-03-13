@@ -5,11 +5,10 @@ from tqdm.auto import tqdm
 def train_one_epoch(model, loader, optimizer, criterion, device):
     model.train()
     train_loss = 0.0
-    # for images, labels in tqdm(loader, desc="Training", leave=False):
     for images, labels in loader:
         images, labels = images.to(device), labels.to(device)
         optimizer.zero_grad()
-        outputs = model(images).logits
+        outputs = model(images)#.logits
         loss = criterion(outputs, labels)
         loss.backward()
         optimizer.step()
@@ -23,11 +22,9 @@ def train_one_epoch(model, loader, optimizer, criterion, device):
 def val_one_epoch(model, loader, criterion, device):
     model.eval()
     val_loss, correct, total = 0, 0, 0
-    
-    # for images, labels in tqdm(loader, desc="Validation", leave=False):
     for images, labels in loader:
         images, labels = images.to(device), labels.to(device)
-        outputs = model(images).logits
+        outputs = model(images)#.logits
         loss = criterion(outputs, labels)
 
         val_loss += loss.item() * images.size(0)
@@ -44,11 +41,9 @@ def val_one_epoch(model, loader, criterion, device):
 def inference(model, loader, device):
     model.eval()    
     preds = []
-
-    # for images in tqdm(loader, desc="Inference", leave=False):
     for images in loader:
         images = images.to(device)
-        outputs = model(images).logits
+        outputs = model(images)#.logits
         _, predicted = torch.max(outputs, 1)
         preds.extend(predicted.cpu().numpy())
     return preds

@@ -38,11 +38,6 @@ def preprocessing(data):
 def get_dataloaders(dataset, train_val_idx, batch_size=32, augment_num = 3,
                     image_size = 224, num_workers=4, SEED=0):
     train, test = dataset # train, test 분리
-    # train, test = get_data() # 데이터 가져오기
-    
-    # # data 전처리
-    # label_encoder = LabelEncoder()
-    # train["label"] = label_encoder.fit_transform(train["label"])  # 문자열 라벨을 숫자로 변환
     
     if train_val_idx: # kfold 이면
         train_idx, val_idx = train_val_idx

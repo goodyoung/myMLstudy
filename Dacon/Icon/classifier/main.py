@@ -11,22 +11,21 @@ from config import Config
 
 def run_model_pipeline(dataset, args, config, train_val_idx = None, fold_num = None):
     # 데이터 로드
-    train_loader, val_loader, test_loader = get_dataloaders(dataset = dataset,
-                                                            train_val_idx = train_val_idx,
-                                                                           batch_size=args.batch_size, 
-                                                                           augment_num = 3, 
-                                                                           image_size = config.image_size,
-                                                                           num_workers = args.num_workers,
-                                                                           SEED = config.seed)
+    train_loader, val_loader, test_loader = get_dataloaders(dataset = dataset,train_val_idx = train_val_idx,
+                                                            batch_size=args.batch_size, augment_num = 3, 
+                                                            image_size = config.image_size,
+                                                            num_workers = args.num_workers,
+                                                            SEED = config.seed)
     # 모델 로드
     model = get_model(num_channels = config.in_channel, 
                       num_labels = config.num_labels, device = args.device)
-    if args.mode == "train" or args.mode == "total":
+    if args.mode in ["train", "total"]:
         # 손실 함수 및 최적화 기법 설정
         criterion = nn.CrossEntropyLoss()
         optimizer = optim.AdamW(model.parameters(), lr=args.lr)
-        scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.epochs)
-    
+
+        T_max = min(10, args.epochs)
+        scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=T_max)
         # 모델 학습
         best_model = train_model(model, train_loader, val_loader, optimizer, criterion, scheduler, args, fold_num)
         
@@ -34,8 +33,6 @@ def run_model_pipeline(dataset, args, config, train_val_idx = None, fold_num = N
         best_model = load_model(model, args.save_model_path, args.device)
     return best_model, test_loader
         
-        
-    
 def main():
     config = Config()
     parser = argparse.ArgumentParser(description="Train Model")
@@ -74,7 +71,7 @@ def main():
         best_model, test_loader = run_model_pipeline(dataset = (train, test), 
                                                      args = args, config = config)
         
-    if args.mode == "total" or args.mode == "inference":
+    if args.mode in ["total", "inference"]:
         if args.use_kfold:
             for idx, model in enumerate(best_models):
                 preds = inference(model, test_loader, args.device) # Inference
