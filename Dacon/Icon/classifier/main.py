@@ -24,8 +24,10 @@ def run_model_pipeline(dataset, args, config, train_val_idx = None, fold_num = N
         criterion = nn.CrossEntropyLoss()
         optimizer = optim.AdamW(model.parameters(), lr=args.lr)
 
-        T_max = min(10, args.epochs)
-        scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=T_max)
+        # T_max = min(10, args.epochs)
+        # scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=T_max)
+        scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode="min", factor=0.5, patience=3, verbose=True)
+
         # 모델 학습
         best_model = train_model(model, train_loader, val_loader, optimizer, criterion, scheduler, args, fold_num)
         

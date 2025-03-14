@@ -46,10 +46,10 @@ def get_dataloaders(dataset, train_val_idx, batch_size=32, augment_num = 3,
     
     transform = transforms.Compose([
         transforms.ToPILImage(),
-        transforms.Resize((image_size, image_size)),
-        # transforms.RandomHorizontalFlip(p=0.7),  # 50% 확률로 좌우 반전
-        # transforms.RandomVerticalFlip(p=0.3),  # 20% 확률로 상하 반전 (너무 강한 반전 방지)
-        # transforms.RandomRotation(degrees=(-25, 25)),  # 제한된 각도 회전
+        transforms.Resize((image_size, image_size), interpolation=transforms.InterpolationMode.NEAREST),
+        transforms.RandomHorizontalFlip(p=0.7),  # 50% 확률로 좌우 반전
+        transforms.RandomVerticalFlip(p=0.3),  # 20% 확률로 상하 반전 (너무 강한 반전 방지)
+        transforms.RandomRotation(degrees=(-25, 25)),  # 제한된 각도 회전
         # transforms.RandomAffine(degrees=30, translate=(0.1, 0.1), scale=(0.8, 1.2), shear=10),
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.5], std=[0.5]),
@@ -58,7 +58,7 @@ def get_dataloaders(dataset, train_val_idx, batch_size=32, augment_num = 3,
     
     test_transform = transforms.Compose([
         transforms.ToPILImage(),
-        transforms.Resize((image_size, image_size)),
+        transforms.Resize((image_size, image_size), interpolation=transforms.InterpolationMode.NEAREST),
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.5], std=[0.5])
     ])
@@ -69,7 +69,7 @@ def get_dataloaders(dataset, train_val_idx, batch_size=32, augment_num = 3,
     test_dataset = CustomDataset(df = test.iloc[:, 1:], transform=test_transform, test = True)
 
     # aug dataset    
-    # for _ in range(augment_num): train_dataset += CustomDataset(df = train.iloc[train_idx, :], transform=transform)
+    for _ in range(augment_num): train_dataset += CustomDataset(df = train.iloc[train_idx, :], transform=transform)
 
     # data loader
     train_loader = DataLoader(train_dataset, batch_size=batch_size, num_workers=num_workers, pin_memory = True, shuffle=True)
