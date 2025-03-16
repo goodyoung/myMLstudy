@@ -49,10 +49,10 @@ def get_model(num_channels, num_labels, device):
     #     # ignore_mismatched_sizes=True,
     #     config=config,
     # )
-    model = timm.create_model('timm/resnet50.a1_in1k', 
+    model = timm.create_model('timm/resnet101.a1_in1k', 
                               num_classes=num_labels, in_chans=num_channels,
                               pretrained=False)  # 사전 훈련된 가중치 로드
-    model.conv1 = CustomConv()
+    # model.conv1 = CustomConv()
     # model.bn1 = nn.BatchNorm2d(192)
     # model.layer1[0].conv1 = nn.Conv2d(192, 64, kernel_size=1, stride=1, bias=False)
     
