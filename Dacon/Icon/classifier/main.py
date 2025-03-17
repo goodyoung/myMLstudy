@@ -62,7 +62,7 @@ def main():
         skf = StratifiedKFold(n_splits=args.n_splits, shuffle=True, random_state=config.seed)
         for fold, (train_idx, val_idx) in enumerate(skf.split(np.zeros(len(train['label'])), train['label'])):
             print(f"Fold {fold+1}/{args.n_splits}")
-            args.save_model_path = f"weights/baseline-timm-aug-no-pretrained_fold{fold}.pth"
+            args.save_model_path = f"weights/baseline-resnet101_fold{fold}.pth"
             # 훈련 파이프라인
             best_model, test_loader = run_model_pipeline(dataset = (train, test),
                                                          train_val_idx = (train_idx, val_idx), 
@@ -76,11 +76,11 @@ def main():
     if args.mode in ["total", "inference"]:
         if args.use_kfold:
             for idx, model in enumerate(best_models):
-                preds = inference(model, test_loader, args.device) # Inference
-                submit(preds, label_encoder, args.submission_path + f"_fold{str(idx+1)}" + ".csv") # Submit
+                preds, probs = inference(model, test_loader, args.device) # Inference
+                submit(preds, probs, label_encoder, args.submission_path + f"_fold{str(idx+1)}" + ".csv") # Submit
         else:
-            preds = inference(best_model, test_loader, args.device) # Inference
-            submit(preds, label_encoder, args.submission_path + ".csv") # Submit
+            preds, probs = inference(best_model, test_loader, args.device) # Inference
+            submit(preds, probs, label_encoder, args.submission_path + ".csv") # Submit
 
 if __name__ == "__main__":
     main()

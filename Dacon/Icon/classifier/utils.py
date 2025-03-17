@@ -37,21 +37,39 @@ def val_one_epoch(model, loader, criterion, device):
     acc = correct / total
     return one_epoch_loss, acc
     
+# @torch.no_grad()
+# def inference(model, loader, device):
+#     model.eval()    
+#     preds = []
+#     for images in loader:
+#         images = images.to(device)
+#         outputs = model(images)#.logits
+#         _, predicted = torch.max(outputs, 1)
+#         preds.extend(predicted.cpu().numpy())
+#     return preds
+
 @torch.no_grad()
 def inference(model, loader, device):
     model.eval()    
-    preds = []
+    preds, probs = [], []  
+    
     for images in loader:
         images = images.to(device)
-        outputs = model(images)#.logits
-        _, predicted = torch.max(outputs, 1)
-        preds.extend(predicted.cpu().numpy())
-    return preds
-    
-def submit(preds, encoder, file_name):
+        outputs = model(images) #.logits
+        
+        probabilities = torch.softmax(outputs, dim=1)  # 확률값 변환
+        _, predicted = torch.max(outputs, 1)  # 최종 예측 클래스
+        preds.extend(predicted.cpu().numpy())  
+        probs.extend(probabilities.cpu().numpy().tolist())  # 확률값 리스트에 저장
+
+    return preds, probs  # 예측값과 확률값 반환
+
+def submit(preds, probs, encoder, file_name):
     submission = pd.read_csv("../open/sample_submission.csv")
+    print(encoder.classes_)
     pred_labels = encoder.inverse_transform(preds)
     submission['label'] = pred_labels
+    submission['probs'] = probs
     submission.to_csv(file_name, index=False)
 
 def save_checkpoint(model, path):
